@@ -1,0 +1,35 @@
+:root {
+  --primary-color: #d45d79;
+  /* Darker pink for better visibility */
+  --secondary-color: #ea90a6;
+  --accent-color: #a83f58;
+  /* Darker accent */
+  --text-primary: #2c1810;
+  /* Dark brown/black for high contrast */
+  --text-secondary: #5d4037;
+  /* Medium brown for secondary text */
+  --text-light: #ffffff;
+  --bg-color: #fff0f3;
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  /* More opaque for better text readability */
+  --glass-border: rgba(255, 255, 255, 0.6);
+  --shadow-sm: 0 2px 8px rgba(168, 63, 88, 0.1);
+  --shadow-md: 0 4px 16px rgba(168, 63, 88, 0.15);
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+}
+
+@mixin glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-sm);
+}
+
+@mixin flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}

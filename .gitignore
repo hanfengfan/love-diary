@@ -1,0 +1,64 @@
+########################################
+#           Backend (Python)           #
+########################################
+
+# Python 字节码
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# 虚拟环境
+love-diary-backend/venv/
+venv/
+.env/
+*.env
+
+# Flask instance 文件（如配置、SQLite 等）
+love-diary-backend/instance/
+*.db
+*.sqlite
+*.sqlite3
+
+# 上传文件目录（如需保留可移除）
+love-diary-backend/uploads/
+
+# 通用缓存文件
+*.log
+*.temp
+
+########################################
+#           Frontend (Node)            #
+########################################
+
+# Node 依赖
+love-diary-frontend/node_modules/
+
+# Vite/Vue/React 构建产物
+love-diary-frontend/dist/
+
+# 临时文件
+*.tmp
+*.cache
+
+# NPM / Yarn 锁定文件（如你不用提交）
+# 若需提交lock文件可注释掉
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+########################################
+#          System / Editor             #
+########################################
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+gitignore
