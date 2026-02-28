@@ -36,9 +36,33 @@
               </template>
             </el-dropdown>
           </div>
+          <!-- Mobile hamburger -->
+          <button class="mobile-menu-btn" @click="mobileMenuOpen = !mobileMenuOpen">
+            <span :class="{ open: mobileMenuOpen }"></span>
+          </button>
         </div>
       </div>
     </header>
+
+    <!-- Mobile Navigation Overlay -->
+    <transition name="slide-right">
+      <div v-if="mobileMenuOpen" class="mobile-nav-overlay" @click="mobileMenuOpen = false">
+        <nav class="mobile-nav" @click.stop>
+          <router-link to="/" @click="mobileMenuOpen = false">首页</router-link>
+          <router-link to="/timeline" @click="mobileMenuOpen = false">时间线</router-link>
+          <router-link to="/photos" @click="mobileMenuOpen = false">相册</router-link>
+          <router-link to="/videos" @click="mobileMenuOpen = false">视频</router-link>
+          <router-link to="/diaries" @click="mobileMenuOpen = false">日记</router-link>
+          <router-link to="/search" @click="mobileMenuOpen = false">搜索</router-link>
+          <div class="mobile-nav-divider"></div>
+          <router-link v-if="!authStore.isLoggedIn" to="/login" @click="mobileMenuOpen = false">登录</router-link>
+          <template v-else>
+            <router-link to="/admin/photos" @click="mobileMenuOpen = false">后台管理</router-link>
+            <a href="#" @click.prevent="handleLogout">退出登录</a>
+          </template>
+        </nav>
+      </div>
+    </transition>
 
     <main class="content">
       <router-view v-slot="{ Component }">
@@ -63,6 +87,7 @@ import { Search, ArrowDown } from '@element-plus/icons-vue'
 const authStore = useAuthStore()
 const router = useRouter()
 const isScrolled = ref(false)
+const mobileMenuOpen = ref(false)
 
 const handleScroll = () => {
   isScrolled.value = window.scrollY > 50
@@ -70,11 +95,16 @@ const handleScroll = () => {
 
 const handleCommand = (command) => {
   if (command === 'logout') {
-    authStore.logout()
-    router.push('/')
+    handleLogout()
   } else if (command === 'admin') {
     router.push('/admin')
   }
+}
+
+const handleLogout = () => {
+  authStore.logout()
+  mobileMenuOpen.value = false
+  router.push('/')
 }
 
 onMounted(() => {
@@ -141,13 +171,13 @@ onUnmounted(() => {
 
   a {
     font-size: 1rem;
-    font-weight: 600; /* Increased weight */
-    color: var(--text-primary); /* Changed from text-secondary for better visibility */
+    font-weight: 600;
+    color: var(--text-primary);
     position: relative;
-    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8); /* Add light shadow for contrast against glass */
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
 
     &.active, &:hover {
-      color: var(--accent-color); /* Use accent color which is darker than primary */
+      color: var(--accent-color);
     }
 
     &::after {
@@ -197,9 +227,114 @@ onUnmounted(() => {
   }
 }
 
+.mobile-menu-btn {
+  display: none;
+  width: 30px;
+  height: 30px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  padding: 0;
+
+  span, span::before, span::after {
+    display: block;
+    width: 24px;
+    height: 2px;
+    background: var(--text-primary);
+    border-radius: 2px;
+    transition: all 0.3s ease;
+  }
+
+  span::before, span::after {
+    content: '';
+    position: absolute;
+    left: 3px;
+  }
+
+  span::before {
+    top: 8px;
+  }
+
+  span::after {
+    bottom: 8px;
+  }
+
+  span.open {
+    background: transparent;
+
+    &::before {
+      top: 14px;
+      transform: rotate(45deg);
+    }
+
+    &::after {
+      bottom: 14px;
+      transform: rotate(-45deg);
+    }
+  }
+}
+
+.mobile-nav-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 999;
+
+  .mobile-nav {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 260px;
+    background: white;
+    padding: 5rem 2rem 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+
+    a {
+      font-size: 1.1rem;
+      padding: 0.5rem 0;
+      color: var(--text-primary);
+      font-weight: 500;
+      transition: color 0.2s ease;
+
+      &:hover, &.router-link-active {
+        color: var(--primary-color);
+      }
+    }
+
+    .mobile-nav-divider {
+      height: 1px;
+      background: rgba(0, 0, 0, 0.1);
+      margin: 0.5rem 0;
+    }
+  }
+}
+
+.slide-right-enter-active,
+.slide-right-leave-active {
+  transition: opacity 0.3s ease;
+
+  .mobile-nav {
+    transition: transform 0.3s ease;
+  }
+}
+
+.slide-right-enter-from,
+.slide-right-leave-to {
+  opacity: 0;
+
+  .mobile-nav {
+    transform: translateX(100%);
+  }
+}
+
 .content {
   flex: 1;
-  padding-top: 80px; // Space for fixed header
+  padding-top: 80px;
 }
 
 .footer {
@@ -211,7 +346,19 @@ onUnmounted(() => {
 
 @media (max-width: 768px) {
   .nav-links {
-    display: none; // Mobile menu to be implemented if needed
+    display: none;
+  }
+
+  .actions .icon-btn,
+  .actions .login-btn,
+  .actions .user-menu {
+    display: none;
+  }
+
+  .mobile-menu-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 }
 </style>

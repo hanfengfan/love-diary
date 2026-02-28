@@ -1,5 +1,5 @@
-from flask import Blueprint, request, jsonify
-from flask_login import login_required
+from flask import Blueprint, request, jsonify, current_app
+from flask_login import login_required, current_user
 from app.models import Diary, db
 from app.utils.decorators import admin_required
 
@@ -45,6 +45,7 @@ def get_diaries():
         })
 
     except Exception as e:
+        current_app.logger.error(f'获取日记列表失败: {e}', exc_info=True)
         return jsonify({'error': '获取日记列表失败'}), 500
 
 @diaries_bp.route('', methods=['POST'])
@@ -78,6 +79,7 @@ def create_diary():
 
     except Exception as e:
         db.session.rollback()
+        current_app.logger.error(f'日记创建失败: {e}', exc_info=True)
         return jsonify({'error': '日记创建失败'}), 500
 
 @diaries_bp.route('/<int:diary_id>', methods=['GET'])
@@ -87,6 +89,7 @@ def get_diary(diary_id):
         diary = Diary.query.get_or_404(diary_id)
         return jsonify(diary.to_dict())
     except Exception as e:
+        current_app.logger.error(f'获取日记详情失败: {e}', exc_info=True)
         return jsonify({'error': '获取日记详情失败'}), 500
 
 @diaries_bp.route('/<int:diary_id>', methods=['PUT'])
@@ -120,6 +123,7 @@ def update_diary(diary_id):
 
     except Exception as e:
         db.session.rollback()
+        current_app.logger.error(f'日记更新失败: {e}', exc_info=True)
         return jsonify({'error': '日记更新失败'}), 500
 
 @diaries_bp.route('/<int:diary_id>', methods=['DELETE'])
@@ -137,6 +141,7 @@ def delete_diary(diary_id):
 
     except Exception as e:
         db.session.rollback()
+        current_app.logger.error(f'日记删除失败: {e}', exc_info=True)
         return jsonify({'error': '日记删除失败'}), 500
 
 @diaries_bp.route('/categories', methods=['GET'])
@@ -147,6 +152,7 @@ def get_categories():
         category_list = [cat[0] for cat in categories if cat[0]]
         return jsonify({'categories': category_list})
     except Exception as e:
+        current_app.logger.error(f'获取分类失败: {e}', exc_info=True)
         return jsonify({'error': '获取分类失败'}), 500
 
 @diaries_bp.route('/tags', methods=['GET'])
@@ -161,6 +167,7 @@ def get_tags():
                 all_tags.update(tags)
         return jsonify({'tags': list(all_tags)})
     except Exception as e:
+        current_app.logger.error(f'获取标签失败: {e}', exc_info=True)
         return jsonify({'error': '获取标签失败'}), 500
 
 @diaries_bp.route('/moods', methods=['GET'])
@@ -171,4 +178,5 @@ def get_moods():
         mood_list = [mood[0] for mood in moods if mood[0]]
         return jsonify({'moods': mood_list})
     except Exception as e:
+        current_app.logger.error(f'获取心情类型失败: {e}', exc_info=True)
         return jsonify({'error': '获取心情类型失败'}), 500

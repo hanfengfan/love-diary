@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, session
+from flask import Blueprint, request, jsonify, session, current_app
 from flask_login import login_user, logout_user, login_required, current_user
 from app.models import Admin, db
 from app.utils.auth import check_password
@@ -35,6 +35,7 @@ def login():
         })
 
     except Exception as e:
+        current_app.logger.error(f'登录失败: {e}', exc_info=True)
         return jsonify({'error': '登录失败，请稍后重试'}), 500
 
 @auth_bp.route('/logout', methods=['POST'])
@@ -45,6 +46,7 @@ def logout():
         logout_user()
         return jsonify({'message': '登出成功'})
     except Exception as e:
+        current_app.logger.error(f'登出失败: {e}', exc_info=True)
         return jsonify({'error': '登出失败'}), 500
 
 @auth_bp.route('/check', methods=['GET'])
@@ -93,4 +95,5 @@ def change_password():
 
     except Exception as e:
         db.session.rollback()
+        current_app.logger.error(f'密码修改失败: {e}', exc_info=True)
         return jsonify({'error': '密码修改失败'}), 500

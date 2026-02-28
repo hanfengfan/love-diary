@@ -3,14 +3,17 @@ from flask_cors import CORS
 from flask_login import LoginManager
 from .models.database import db
 import os
+import secrets
+import logging
 
 login_manager = LoginManager()
+logger = logging.getLogger(__name__)
 
 def create_app():
     app = Flask(__name__)
 
     # 配置
-    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or 'your-secret-key-here'
+    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or secrets.token_hex(32)
     app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL') or 'sqlite:///database.db'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'uploads')
@@ -27,7 +30,8 @@ def create_app():
     # 初始化扩展
     db.init_app(app)
     login_manager.init_app(app)
-    CORS(app)
+    CORS(app, origins=['http://localhost:3000', 'http://127.0.0.1:3000'],
+         supports_credentials=True)
 
     # 登录管理器配置
     login_manager.login_view = 'auth.login'

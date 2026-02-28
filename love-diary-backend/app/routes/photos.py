@@ -1,6 +1,6 @@
 import os
 from flask import Blueprint, request, jsonify, current_app
-from flask_login import login_required
+from flask_login import login_required, current_user
 from app.models import Photo, db
 from app.utils.decorators import admin_required
 from app.utils.file import save_uploaded_file
@@ -42,6 +42,7 @@ def get_photos():
         })
 
     except Exception as e:
+        current_app.logger.error(f'获取照片列表失败: {e}', exc_info=True)
         return jsonify({'error': '获取照片列表失败'}), 500
 
 @photos_bp.route('', methods=['POST'])
@@ -93,6 +94,7 @@ def upload_photo():
 
     except Exception as e:
         db.session.rollback()
+        current_app.logger.error(f'照片上传失败: {e}', exc_info=True)
         return jsonify({'error': '照片上传失败'}), 500
 
 @photos_bp.route('/<int:photo_id>', methods=['GET'])
@@ -102,6 +104,7 @@ def get_photo(photo_id):
         photo = Photo.query.get_or_404(photo_id)
         return jsonify(photo.to_dict())
     except Exception as e:
+        current_app.logger.error(f'获取照片详情失败: {e}', exc_info=True)
         return jsonify({'error': '获取照片详情失败'}), 500
 
 @photos_bp.route('/<int:photo_id>', methods=['PUT'])
@@ -133,6 +136,7 @@ def update_photo(photo_id):
 
     except Exception as e:
         db.session.rollback()
+        current_app.logger.error(f'照片信息更新失败: {e}', exc_info=True)
         return jsonify({'error': '照片信息更新失败'}), 500
 
 @photos_bp.route('/<int:photo_id>', methods=['DELETE'])
@@ -156,6 +160,7 @@ def delete_photo(photo_id):
 
     except Exception as e:
         db.session.rollback()
+        current_app.logger.error(f'照片删除失败: {e}', exc_info=True)
         return jsonify({'error': '照片删除失败'}), 500
 
 @photos_bp.route('/categories', methods=['GET'])
@@ -166,6 +171,7 @@ def get_categories():
         category_list = [cat[0] for cat in categories if cat[0]]
         return jsonify({'categories': category_list})
     except Exception as e:
+        current_app.logger.error(f'获取分类失败: {e}', exc_info=True)
         return jsonify({'error': '获取分类失败'}), 500
 
 @photos_bp.route('/tags', methods=['GET'])
@@ -180,4 +186,5 @@ def get_tags():
                 all_tags.update(tags)
         return jsonify({'tags': list(all_tags)})
     except Exception as e:
+        current_app.logger.error(f'获取标签失败: {e}', exc_info=True)
         return jsonify({'error': '获取标签失败'}), 500

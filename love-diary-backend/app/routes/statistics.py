@@ -1,11 +1,12 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from sqlalchemy import func
-from datetime import datetime, timedelta
-from app.models import Photo, Video, Diary
+from datetime import datetime, timedelta, timezone
+from app.models import Photo, Video, Diary, db
 from flask_login import login_required
 from app.utils.decorators import admin_required
 
 statistics_bp = Blueprint('statistics', __name__)
+
 
 @statistics_bp.route('', methods=['GET'])
 @login_required
@@ -37,14 +38,14 @@ def get_statistics():
         ).filter(Diary.mood.isnot(None)).group_by(Diary.mood).all()
 
         # 最近7天的数据统计
-        seven_days_ago = datetime.utcnow() - timedelta(days=7)
+        seven_days_ago = datetime.now(timezone.utc) - timedelta(days=7)
 
         recent_photos = Photo.query.filter(Photo.created_at >= seven_days_ago).count()
         recent_videos = Video.query.filter(Video.created_at >= seven_days_ago).count()
         recent_diaries = Diary.query.filter(Diary.created_at >= seven_days_ago).count()
 
         # 最近30天的数据统计
-        thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+        thirty_days_ago = datetime.now(timezone.utc) - timedelta(days=30)
 
         monthly_photos = Photo.query.filter(Photo.created_at >= thirty_days_ago).count()
         monthly_videos = Video.query.filter(Video.created_at >= thirty_days_ago).count()
@@ -81,46 +82,55 @@ def get_statistics():
         })
 
     except Exception as e:
+        current_app.logger.error(f'获取统计数据失败: {e}', exc_info=True)
         return jsonify({'error': '获取统计数据失败'}), 500
+
 
 @statistics_bp.route('/timeline', methods=['GET'])
 @login_required
 @admin_required
 def get_timeline_statistics():
-    """获取时间线统计数据"""
+    """获取时间线统计数据 — 使用 SQL 聚合代替 N+1 查询"""
     try:
         days = request.args.get('days', 30, type=int)
-        end_date = datetime.utcnow()
+        end_date = datetime.now(timezone.utc)
         start_date = end_date - timedelta(days=days)
 
-        # 生成日期列表
-        date_list = []
+        # 使用 SQL GROUP BY 聚合，一次查询获取全部结果
+        photo_counts = dict(db.session.query(
+            func.date(Photo.created_at),
+            func.count(Photo.id)
+        ).filter(
+            Photo.created_at >= start_date,
+            Photo.created_at <= end_date
+        ).group_by(func.date(Photo.created_at)).all())
+
+        video_counts = dict(db.session.query(
+            func.date(Video.created_at),
+            func.count(Video.id)
+        ).filter(
+            Video.created_at >= start_date,
+            Video.created_at <= end_date
+        ).group_by(func.date(Video.created_at)).all())
+
+        diary_counts = dict(db.session.query(
+            func.date(Diary.created_at),
+            func.count(Diary.id)
+        ).filter(
+            Diary.created_at >= start_date,
+            Diary.created_at <= end_date
+        ).group_by(func.date(Diary.created_at)).all())
+
+        # 生成日期列表并合并结果
+        timeline_data = {}
         current_date = start_date
         while current_date <= end_date:
-            date_list.append(current_date.strftime('%Y-%m-%d'))
-            current_date += timedelta(days=1)
+            date_str = current_date.strftime('%Y-%m-%d')
+            date_obj = current_date.date()
 
-        # 统计每天的数据
-        timeline_data = {}
-
-        for date_str in date_list:
-            date = datetime.strptime(date_str, '%Y-%m-%d')
-            next_date = date + timedelta(days=1)
-
-            photos = Photo.query.filter(
-                Photo.created_at >= date,
-                Photo.created_at < next_date
-            ).count()
-
-            videos = Video.query.filter(
-                Video.created_at >= date,
-                Video.created_at < next_date
-            ).count()
-
-            diaries = Diary.query.filter(
-                Diary.created_at >= date,
-                Diary.created_at < next_date
-            ).count()
+            photos = photo_counts.get(date_obj, 0)
+            videos = video_counts.get(date_obj, 0)
+            diaries = diary_counts.get(date_obj, 0)
 
             timeline_data[date_str] = {
                 'photos': photos,
@@ -128,6 +138,7 @@ def get_timeline_statistics():
                 'diaries': diaries,
                 'total': photos + videos + diaries
             }
+            current_date += timedelta(days=1)
 
         return jsonify({
             'timeline': timeline_data,
@@ -139,4 +150,5 @@ def get_timeline_statistics():
         })
 
     except Exception as e:
+        current_app.logger.error(f'获取时间线统计数据失败: {e}', exc_info=True)
         return jsonify({'error': '获取时间线统计数据失败'}), 500

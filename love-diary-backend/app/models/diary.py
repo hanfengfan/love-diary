@@ -1,5 +1,10 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from .database import db
+
+
+def _utcnow():
+    return datetime.now(timezone.utc)
+
 
 class Diary(db.Model):
     __tablename__ = 'diaries'
@@ -11,8 +16,8 @@ class Diary(db.Model):
     category = db.Column(db.String(100), default='日常')
     tags = db.Column(db.String(500), default='')
     mood = db.Column(db.String(50))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=_utcnow)
+    updated_at = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
 
     def __repr__(self):
         return f'<Diary {self.title}>'

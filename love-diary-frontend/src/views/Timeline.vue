@@ -55,7 +55,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { timelineApi } from '@/api/search'
 import dayjs from 'dayjs'
@@ -66,6 +66,8 @@ const timelineItems = ref([])
 const page = ref(1)
 const hasMore = ref(true)
 const loading = ref(false)
+const loadingTrigger = ref(null)
+let observer = null
 
 const loadData = async () => {
   if (loading.value || !hasMore.value) return
@@ -92,11 +94,6 @@ const loadData = async () => {
 
 const viewItem = (item) => {
   if (item.type === 'photo') {
-    // Ideally open a lightbox, but for now redirect or just show
-    // We can emit an event or use a store to open global lightbox
-    // For simplicity, let's assume we want to go to the detail page if it existed,
-    // or just do nothing for now as photos are usually viewed in gallery.
-    // Let's just log for now or maybe implement a simple view later.
     console.log('View photo', item)
   } else if (item.type === 'video') {
     router.push(`/videos?id=${item.id}`)
@@ -114,9 +111,29 @@ const truncateText = (text, length) => {
   return text.length > length ? text.substring(0, length) + '...' : text
 }
 
-onMounted(() => {
-  loadData()
-  // Infinite scroll could be implemented here with IntersectionObserver on loadingTrigger
+const setupObserver = () => {
+  if (!loadingTrigger.value) return
+  observer = new IntersectionObserver(
+    (entries) => {
+      if (entries[0].isIntersecting && hasMore.value && !loading.value) {
+        loadData()
+      }
+    },
+    { threshold: 0.1 }
+  )
+  observer.observe(loadingTrigger.value)
+}
+
+onMounted(async () => {
+  await loadData()
+  await nextTick()
+  setupObserver()
+})
+
+onUnmounted(() => {
+  if (observer) {
+    observer.disconnect()
+  }
 })
 </script>
 

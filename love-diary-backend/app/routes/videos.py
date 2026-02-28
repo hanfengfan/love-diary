@@ -1,6 +1,6 @@
 import os
 from flask import Blueprint, request, jsonify, current_app
-from flask_login import login_required
+from flask_login import login_required, current_user
 from app.models import Video, db
 from app.utils.decorators import admin_required
 from app.utils.file import save_uploaded_file, generate_video_thumbnail, get_video_duration
@@ -42,6 +42,7 @@ def get_videos():
         })
 
     except Exception as e:
+        current_app.logger.error(f'获取视频列表失败: {e}', exc_info=True)
         return jsonify({'error': '获取视频列表失败'}), 500
 
 @videos_bp.route('', methods=['POST'])
@@ -111,6 +112,7 @@ def upload_video():
 
     except Exception as e:
         db.session.rollback()
+        current_app.logger.error(f'视频上传失败: {e}', exc_info=True)
         return jsonify({'error': '视频上传失败'}), 500
 
 @videos_bp.route('/<int:video_id>', methods=['GET'])
@@ -120,6 +122,7 @@ def get_video(video_id):
         video = Video.query.get_or_404(video_id)
         return jsonify(video.to_dict())
     except Exception as e:
+        current_app.logger.error(f'获取视频详情失败: {e}', exc_info=True)
         return jsonify({'error': '获取视频详情失败'}), 500
 
 @videos_bp.route('/<int:video_id>', methods=['PUT'])
@@ -151,6 +154,7 @@ def update_video(video_id):
 
     except Exception as e:
         db.session.rollback()
+        current_app.logger.error(f'视频信息更新失败: {e}', exc_info=True)
         return jsonify({'error': '视频信息更新失败'}), 500
 
 @videos_bp.route('/<int:video_id>', methods=['DELETE'])
@@ -180,6 +184,7 @@ def delete_video(video_id):
 
     except Exception as e:
         db.session.rollback()
+        current_app.logger.error(f'视频删除失败: {e}', exc_info=True)
         return jsonify({'error': '视频删除失败'}), 500
 
 @videos_bp.route('/categories', methods=['GET'])
@@ -190,6 +195,7 @@ def get_categories():
         category_list = [cat[0] for cat in categories if cat[0]]
         return jsonify({'categories': category_list})
     except Exception as e:
+        current_app.logger.error(f'获取分类失败: {e}', exc_info=True)
         return jsonify({'error': '获取分类失败'}), 500
 
 @videos_bp.route('/tags', methods=['GET'])
@@ -204,4 +210,5 @@ def get_tags():
                 all_tags.update(tags)
         return jsonify({'tags': list(all_tags)})
     except Exception as e:
+        current_app.logger.error(f'获取标签失败: {e}', exc_info=True)
         return jsonify({'error': '获取标签失败'}), 500

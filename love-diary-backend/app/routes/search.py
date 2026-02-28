@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from app.models import Photo, Video, Diary
 
 search_bp = Blueprint('search', __name__)
@@ -61,4 +61,5 @@ def search():
         return jsonify(results)
 
     except Exception as e:
+        current_app.logger.error(f'搜索失败: {e}', exc_info=True)
         return jsonify({'error': '搜索失败'}), 500

@@ -87,7 +87,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, watch } from 'vue'
+import { ref, reactive, onMounted, watch, onUnmounted } from 'vue'
 import { photoApi } from '@/api/photo'
 import dayjs from 'dayjs'
 import { Search, Picture } from '@element-plus/icons-vue'
@@ -153,10 +153,17 @@ const viewPhoto = (photo) => {
 
 const formatDate = (date) => dayjs(date).format('MMM D, YYYY')
 
+let debounceTimer = null
 watch(() => filterForm.tags, () => {
-  // Debounce could be added here
-  pagination.page = 1
-  loadPhotos()
+  clearTimeout(debounceTimer)
+  debounceTimer = setTimeout(() => {
+    pagination.page = 1
+    loadPhotos()
+  }, 300)
+})
+
+onUnmounted(() => {
+  clearTimeout(debounceTimer)
 })
 
 onMounted(() => {

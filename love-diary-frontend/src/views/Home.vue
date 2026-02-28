@@ -108,8 +108,8 @@ const showImageViewer = ref(false)
 const imageUrls = ref([])
 const currentImageIndex = ref(0)
 
-// Hardcoded start date - ideally this should be configurable
-const startDate = dayjs('2023-01-01') 
+// 恋爱开始日期 — 可通过 localStorage 配置, 默认 2023-01-01
+const startDate = dayjs(localStorage.getItem('love_start_date') || '2023-01-01')
 const daysTogether = computed(() => {
   return dayjs().diff(startDate, 'day')
 })

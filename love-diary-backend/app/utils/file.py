@@ -1,8 +1,14 @@
 import os
 import uuid
 from werkzeug.utils import secure_filename
-from moviepy.editor import VideoFileClip
 from PIL import Image
+
+
+def allowed_file(filename, allowed_extensions):
+    """检查文件扩展名是否允许"""
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in allowed_extensions
+
 
 def save_uploaded_file(file, upload_folder, allowed_extensions):
     """保存上传的文件"""
@@ -28,26 +34,29 @@ def save_uploaded_file(file, upload_folder, allowed_extensions):
 def generate_video_thumbnail(video_path, thumbnail_path):
     """生成视频缩略图"""
     try:
+        from moviepy.editor import VideoFileClip
         clip = VideoFileClip(video_path)
         frame = clip.get_frame(1)  # 获取第1秒的帧
         clip.close()
 
         # 保存为图片
-        from PIL import Image
         img = Image.fromarray(frame)
         img.save(thumbnail_path)
         return True
     except Exception as e:
-        print(f"生成缩略图失败: {e}")
+        import logging
+        logging.getLogger(__name__).error(f"生成缩略图失败: {e}", exc_info=True)
         return False
 
 def get_video_duration(video_path):
     """获取视频时长（秒）"""
     try:
+        from moviepy.editor import VideoFileClip
         clip = VideoFileClip(video_path)
         duration = int(clip.duration)
         clip.close()
         return duration
     except Exception as e:
-        print(f"获取视频时长失败: {e}")
+        import logging
+        logging.getLogger(__name__).error(f"获取视频时长失败: {e}", exc_info=True)
         return 0
