@@ -26,8 +26,9 @@ from app.models import db, Admin
 
 app = create_app()
 
-if __name__ == '__main__':
-    # 创建数据库
+# ⚠️ 将数据库初始化放在模块级别（if __name__ == '__main__' 外）
+# 这样无论是 Gunicorn 还是直接运行都会执行，确保数据库表和管理员账号存在
+def init_db():
     with app.app_context():
         db.create_all()
 
@@ -52,4 +53,8 @@ if __name__ == '__main__':
             logger.warning("请尽快登录后台修改密码，或通过 ADMIN_PASSWORD 环境变量预设密码")
             logger.warning("=" * 50)
 
+# 无论 Gunicorn 还是直接运行，都执行初始化
+init_db()
+
+if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
