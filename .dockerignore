@@ -1,0 +1,35 @@
+# Git
+.git
+.gitignore
+
+# Python
+love-diary-backend/venv/
+love-diary-backend/__pycache__/
+love-diary-backend/instance/
+*.pyc
+*.pyo
+
+# Node
+love-diary-frontend/node_modules/
+love-diary-frontend/dist/
+
+# IDE
+.vscode/
+.claude/
+*.code-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docs
+*.md
+!love-diary-backend/requirements.txt
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log

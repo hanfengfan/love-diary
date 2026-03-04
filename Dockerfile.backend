@@ -1,0 +1,28 @@
+# ============================================
+# Love Diary Backend - Flask + Gunicorn
+# ============================================
+FROM python:3.11-slim
+
+# 安装系统依赖（ffmpeg 用于视频处理）
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ffmpeg \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# 先复制依赖文件，利用 Docker 缓存层
+COPY love-diary-backend/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt gunicorn
+
+# 复制后端代码
+COPY love-diary-backend/ .
+
+# 创建上传目录
+RUN mkdir -p uploads/photos uploads/videos uploads/thumbnails
+
+# 暴露端口
+EXPOSE 5000
+
+# 使用 Gunicorn 启动
+CMD ["gunicorn", "--config", "gunicorn.conf.py", "run:app"]

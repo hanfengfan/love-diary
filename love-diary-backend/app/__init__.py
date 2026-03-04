@@ -30,8 +30,14 @@ def create_app():
     # 初始化扩展
     db.init_app(app)
     login_manager.init_app(app)
-    CORS(app, origins=['http://localhost:3000', 'http://127.0.0.1:3000'],
-         supports_credentials=True)
+
+    # CORS 配置：生产环境从环境变量读取，开发环境使用 localhost
+    cors_origins_str = os.environ.get('CORS_ORIGINS', '')
+    if cors_origins_str:
+        cors_origins = [origin.strip() for origin in cors_origins_str.split(',')]
+    else:
+        cors_origins = ['http://localhost:3000', 'http://127.0.0.1:3000']
+    CORS(app, origins=cors_origins, supports_credentials=True)
 
     # 登录管理器配置
     login_manager.login_view = 'auth.login'

@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  # ==========================================
+  # Flask 后端服务
+  # ==========================================
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: love-diary-backend
+    restart: always
+    env_file:
+      - .env
+    environment:
+      - FLASK_ENV=production
+      - DATABASE_URL=sqlite:///database.db
+    volumes:
+      # 持久化上传的文件
+      - uploads_data:/app/uploads
+      # 持久化 SQLite 数据库
+      - db_data:/app/instance
+    networks:
+      - love-diary-network
+
+  # ==========================================
+  # Nginx 前端 + 反向代理
+  # ==========================================
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: love-diary-frontend
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # Certbot SSL 证书
+      - certbot_conf:/etc/letsencrypt
+      - certbot_www:/var/www/certbot
+    depends_on:
+      - backend
+    networks:
+      - love-diary-network
+
+  # ==========================================
+  # Certbot - 自动 SSL 证书
+  # ==========================================
+  certbot:
+    image: certbot/certbot
+    container_name: love-diary-certbot
+    volumes:
+      - certbot_conf:/etc/letsencrypt
+      - certbot_www:/var/www/certbot
+    # 自动续期证书（每12小时检查一次）
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    networks:
+      - love-diary-network
+
+volumes:
+  uploads_data:
+    driver: local
+  db_data:
+    driver: local
+  certbot_conf:
+    driver: local
+  certbot_www:
+    driver: local
+
+networks:
+  love-diary-network:
+    driver: bridge

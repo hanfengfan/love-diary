@@ -1,0 +1,35 @@
+# ============================================
+# Love Diary Frontend - 多阶段构建
+# ============================================
+
+# 阶段1: 构建 Vue 前端
+FROM node:18-alpine AS builder
+
+WORKDIR /app
+
+# 先复制依赖文件，利用缓存
+COPY love-diary-frontend/package.json love-diary-frontend/package-lock.json* ./
+RUN npm install
+
+# 复制前端源码并构建
+COPY love-diary-frontend/ .
+RUN npm run build
+
+# 阶段2: Nginx 提供静态文件服务
+FROM nginx:alpine
+
+# 删除默认配置
+RUN rm /etc/nginx/conf.d/default.conf
+
+# 从构建阶段复制编译好的前端文件
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# 复制自定义 Nginx 配置
+COPY nginx/nginx.conf /etc/nginx/conf.d/default.conf
+
+# 创建 Certbot webroot 目录
+RUN mkdir -p /var/www/certbot
+
+EXPOSE 80 443
+
+CMD ["nginx", "-g", "daemon off;"]
