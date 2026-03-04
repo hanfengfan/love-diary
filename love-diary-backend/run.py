@@ -34,8 +34,10 @@ if __name__ == '__main__':
         # 创建默认管理员账号
         admin = Admin.query.filter_by(username='admin').first()
         if not admin:
+            import secrets
             from app.utils.auth import generate_password_hash
-            default_password = os.environ.get('ADMIN_PASSWORD', 'admin123')
+            # 优先使用环境变量，否则随机生成安全密码（不使用固定弱密码）
+            default_password = os.environ.get('ADMIN_PASSWORD') or secrets.token_urlsafe(16)
             default_admin = Admin(
                 username='admin',
                 password_hash=generate_password_hash(default_password)
@@ -44,8 +46,10 @@ if __name__ == '__main__':
             db.session.commit()
             logger.warning("=" * 50)
             logger.warning("默认管理员账号已创建: admin")
-            logger.warning("请尽快登录后台修改默认密码！")
-            logger.warning("或通过环境变量 ADMIN_PASSWORD 设置初始密码")
+            if not os.environ.get('ADMIN_PASSWORD'):
+                logger.warning(f"随机初始密码: {default_password}")
+                logger.warning("请立即记录此密码，它不会再次显示！")
+            logger.warning("请尽快登录后台修改密码，或通过 ADMIN_PASSWORD 环境变量预设密码")
             logger.warning("=" * 50)
 
     app.run(debug=True, host='0.0.0.0', port=5000)

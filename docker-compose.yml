@@ -32,6 +32,10 @@ services:
       dockerfile: Dockerfile.frontend
     container_name: love-diary-frontend
     restart: always
+    env_file:
+      - .env
+    environment:
+      - DOMAIN=${DOMAIN:-loveforever.mooo.com}
     ports:
       - "80:80"
       - "443:443"

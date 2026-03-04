@@ -6,12 +6,14 @@
 
 set -e
 
-DOMAIN="loveforever.mooo.com"
-
-# 从 .env 文件读取邮箱
+# 从 .env 文件读取域名和邮箱
 if [ -f .env ]; then
-    EMAIL=$(grep CERTBOT_EMAIL .env | cut -d '=' -f2)
+    DOMAIN=$(grep '^DOMAIN=' .env | cut -d '=' -f2)
+    EMAIL=$(grep '^CERTBOT_EMAIL=' .env | cut -d '=' -f2)
 fi
+
+# 兜底默认值
+DOMAIN=${DOMAIN:-"loveforever.mooo.com"}
 EMAIL=${EMAIL:-"your-email@example.com"}
 
 echo "======================================"
